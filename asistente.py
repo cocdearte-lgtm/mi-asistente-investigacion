@@ -197,12 +197,12 @@ def herramienta_metodologia():
 def herramienta_estructura():
     st.header("📋 Estructurador de Trabajos Académicos")
     
-# Línea ~200 - CORRECTO
-tipo_trabajo = st.selectbox(
-    "Selecciona el tipo de trabajo académico:",
-    ["Tesina", "Tesis", "Artículo científico", "Ensayo", "Reporte"],
-    key="tipo_trabajo"
-)
+    tipo_trabajo = st.selectbox(
+        "Selecciona el tipo de trabajo académico:",
+        ["Tesina", "Tesis", "Artículo científico", "Ensayo", "Reporte"],
+        key="tipo_trabajo"
+    )
+    
     with st.form("form_estructura"):
         tema = st.text_input("Tema principal del trabajo:")
         objetivos = st.text_area("Objetivos principales (uno por línea):")
@@ -213,7 +213,7 @@ tipo_trabajo = st.selectbox(
                     time.sleep(2)
                     
                     estructuras = {
-                        "Tesis de Grado": [
+                        "Tesis": [
                             "**CAPÍTULO I: INTRODUCCIÓN**",
                             "1.1 Planteamiento del Problema",
                             "1.2 Preguntas de Investigación", 
@@ -235,7 +235,7 @@ tipo_trabajo = st.selectbox(
                             "5.2 Conclusiones",
                             "5.3 Recomendaciones"
                         ],
-                        "Artículo Científico": [
+                        "Artículo científico": [
                             "**TÍTULO** (claro y descriptivo)",
                             "**RESUMEN** (250-300 palabras)",
                             "**INTRODUCCIÓN** (problema, relevancia, objetivos)",
@@ -245,12 +245,20 @@ tipo_trabajo = st.selectbox(
                             "**DISCUSIÓN** (interpretación y relación con literatura)",
                             "**CONCLUSIONES** (principales aportes)",
                             "**REFERENCIAS** (formato específico de revista)"
+                        ],
+                        "Tesina": [
+                            "**INTRODUCCIÓN**",
+                            "**MARCO TEÓRICO**",
+                            "**METODOLOGÍA**",
+                            "**ANÁLISIS Y RESULTADOS**",
+                            "**CONCLUSIONES**",
+                            "**BIBLIOGRAFÍA**"
                         ]
                     }
                     
                     st.success(f"**📖 ESTRUCTURA PARA {tipo_trabajo.upper()}:**")
                     
-                    estructura = estructuras.get(tipo_trabajo, estructuras["Tesis de Grado"])
+                    estructura = estructuras.get(tipo_trabajo, estructuras["Tesis"])
                     for item in estructura:
                         st.write(f"• {item}")
 
@@ -310,4 +318,3 @@ else:
 # Pie de página
 st.markdown("---")
 st.caption("🔍 Kit de Herramientas de Investigación v3.0 | Respuestas específicas y accionables | © 2024")
-
