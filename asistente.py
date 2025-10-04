@@ -197,11 +197,12 @@ def herramienta_metodologia():
 def herramienta_estructura():
     st.header("📋 Estructurador de Trabajos Académicos")
     
- tipo_trabajo = st.selectbox(
-        "Tipo de trabajo:",
-        ["Tesis de Grado", "Tesis de Maestría", "Tesis Doctoral", "Artículo Científico", "Proyecto de Investigación"]
-    )
-    
+# Línea ~200 - CORRECTO
+tipo_trabajo = st.selectbox(
+    "Selecciona el tipo de trabajo académico:",
+    ["Tesina", "Tesis", "Artículo científico", "Ensayo", "Reporte"],
+    key="tipo_trabajo"
+)
     with st.form("form_estructura"):
         tema = st.text_input("Tema principal del trabajo:")
         objetivos = st.text_area("Objetivos principales (uno por línea):")
@@ -309,3 +310,4 @@ else:
 # Pie de página
 st.markdown("---")
 st.caption("🔍 Kit de Herramientas de Investigación v3.0 | Respuestas específicas y accionables | © 2024")
+
