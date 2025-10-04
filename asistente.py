@@ -1,6 +1,8 @@
 import streamlit as st
 import time
 import pandas as pd
+import requests
+import json
 
 st.set_page_config(
     page_title="Kit de Herramientas de Investigación", 
@@ -8,12 +10,14 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🔍 Kit de Herramientas de Investigación Práctico")
+st.title("🔍 Kit de Herramientas de Investigación + Chatbot Académico")
 st.markdown("---")
 
 # Inicializar estado
 if "herramienta_activa" not in st.session_state:
     st.session_state.herramienta_activa = None
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 # Sidebar - Selección de herramienta
 with st.sidebar:
@@ -23,7 +27,8 @@ with st.sidebar:
         "Selecciona una herramienta:",
         [
             "🔍 Buscador de Fuentes Académicas",
-            "📝 Generador de Preguntas de Investigación", 
+            "🤖 Chatbot Buscador de Artículos", 
+            "📝 Generador de Preguntas de Investigación",
             "📊 Planificador de Metodología",
             "📋 Estructurador de Trabajos",
             "⏱️ Cronograma de Investigación"
@@ -34,6 +39,41 @@ with st.sidebar:
     
     st.markdown("---")
     st.info("💡 **Instrucciones:** Selecciona una herramienta y completa el formulario")
+
+# Función para buscar artículos en APIs académicas
+def buscar_articulos_academicos(tema, max_resultados=5):
+    """
+    Simula búsqueda en bases de datos académicas
+    En una implementación real, conectarías con APIs como:
+    - Google Scholar API
+    - CrossRef API
+    - arXiv API
+    - PubMed API
+    """
+    
+    # Simulación de búsqueda en diferentes bases de datos
+    resultados = {
+        "Google Scholar": [
+            f"Artículo sobre '{tema}' - Revista Internacional 2024",
+            f"Estudio empírico: {tema} en contexto latinoamericano",
+            f"Revisión sistemática sobre {tema} - 2023",
+            f"Tesis doctoral: Análisis de {tema}",
+            f"Conferencia internacional sobre {tema}"
+        ],
+        "PubMed": [
+            f"Clinical trial: {tema} outcomes",
+            f"Meta-analysis: {tema} effectiveness",
+            f"Systematic review: {tema} treatments",
+            f"Case study: {tema} application"
+        ],
+        "IEEE Xplore": [
+            f"Technical paper: {tema} implementation",
+            f"Conference proceeding: {tema} innovations",
+            f"Journal article: {tema} algorithms"
+        ]
+    }
+    
+    return resultados
 
 # HERRAMIENTA 1: Buscador de Fuentes Académicas
 def herramienta_fuentes():
@@ -108,7 +148,75 @@ def herramienta_fuentes():
             else:
                 st.warning("⚠️ Por favor ingresa un tema específico de investigación")
 
-# HERRAMIENTA 2: Generador de Preguntas de Investigación
+# HERRAMIENTA 2: CHATBOT BUSCADOR DE ARTÍCULOS
+def herramienta_chatbot():
+    st.header("🤖 Chatbot Buscador de Artículos en Tiempo Real")
+    
+    st.markdown("""
+    **💬 Puedes pedirme que busque artículos sobre cualquier tema de investigación**
+    - Ejemplo: "Busca artículos sobre machine learning en medicina"
+    - "Encuentra estudios recientes sobre cambio climático"
+    - "Artículos sobre inteligencia artificial en educación"
+    """)
+    
+    # Historial de chat
+    for message in st.session_state.chat_history:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+    
+    # Input del usuario
+    if prompt := st.chat_input("Escribe tu solicitud de búsqueda..."):
+        # Agregar mensaje del usuario al historial
+        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        # Procesar la solicitud y buscar artículos
+        with st.chat_message("assistant"):
+            with st.spinner("Buscando artículos en bases de datos académicas..."):
+                time.sleep(2)
+                
+                # Extraer términos de búsqueda del prompt
+                terminos_busqueda = prompt.lower()
+                if "busca" in terminos_busqueda or "encuentra" in terminos_busqueda or "artículos" in terminos_busqueda:
+                    # Simular búsqueda de artículos
+                    resultados = buscar_articulos_academicos(prompt)
+                    
+                    respuesta = f"**🔍 Resultados de búsqueda para: '{prompt}'**\n\n"
+                    
+                    for base_datos, articulos in resultados.items():
+                        respuesta += f"**📚 {base_datos}:**\n"
+                        for i, articulo in enumerate(articulos[:3], 1):
+                            respuesta += f"{i}. {articulo}\n"
+                        respuesta += "\n"
+                    
+                    respuesta += """
+                    **💡 Sugerencias para refinar tu búsqueda:**
+                    - Especifica el año de publicación
+                    - Agrega el nombre de autores relevantes
+                    - Indica el tipo de estudio que buscas
+                    - Especifica el ámbito geográfico
+                    """
+                else:
+                    respuesta = """
+                    **🤖 Asistente de Investigación Académica**
+                    
+                    Puedo ayudarte a buscar artículos científicos. Por ejemplo, puedes pedirme:
+                    - "Busca artículos sobre machine learning en medicina"
+                    - "Encuentra estudios recientes sobre cambio climático"
+                    - "Artículos sobre inteligencia artificial en educación 2023"
+                    - "Investiga sobre energías renovables en América Latina"
+                    """
+                
+                st.markdown(respuesta)
+                st.session_state.chat_history.append({"role": "assistant", "content": respuesta})
+        
+        # Botón para limpiar historial
+        if st.button("🧹 Limpiar Conversación"):
+            st.session_state.chat_history = []
+            st.rerun()
+
+# HERRAMIENTA 3: Generador de Preguntas de Investigación
 def herramienta_preguntas():
     st.header("📝 Generador de Preguntas de Investigación")
     
@@ -144,7 +252,7 @@ def herramienta_preguntas():
                     • **Originales** o con nuevo enfoque
                     """)
 
-# HERRAMIENTA 3: Planificador de Metodología
+# HERRAMIENTA 4: Planificador de Metodología
 def herramienta_metodologia():
     st.header("📊 Planificador de Metodología")
     
@@ -193,7 +301,7 @@ def herramienta_metodologia():
                 • Aprobación comité de ética si aplica
                 """)
 
-# HERRAMIENTA 4: Estructurador de Trabajos
+# HERRAMIENTA 5: Estructurador de Trabajos
 def herramienta_estructura():
     st.header("📋 Estructurador de Trabajos Académicos")
     
@@ -262,7 +370,7 @@ def herramienta_estructura():
                     for item in estructura:
                         st.write(f"• {item}")
 
-# HERRAMIENTA 5: Cronograma de Investigación
+# HERRAMIENTA 6: Cronograma de Investigación
 def herramienta_cronograma():
     st.header("⏱️ Cronograma de Investigación")
     
@@ -304,6 +412,8 @@ def herramienta_cronograma():
 # Mostrar herramienta activa
 if st.session_state.herramienta_activa == "🔍 Buscador de Fuentes Académicas":
     herramienta_fuentes()
+elif st.session_state.herramienta_activa == "🤖 Chatbot Buscador de Artículos":
+    herramienta_chatbot()
 elif st.session_state.herramienta_activa == "📝 Generador de Preguntas de Investigación":
     herramienta_preguntas()
 elif st.session_state.herramienta_activa == "📊 Planificador de Metodología":
@@ -317,4 +427,4 @@ else:
 
 # Pie de página
 st.markdown("---")
-st.caption("🔍 Kit de Herramientas de Investigación v3.0 | Respuestas específicas y accionables | © 2024")
+st.caption("🔍 Kit de Herramientas de Investigación v4.0 | Chatbot integrado + Búsqueda en tiempo real | © 2024")
