@@ -1,15 +1,42 @@
+# asistente_investigacion_corregido.py
+
 import streamlit as st
 import requests
-from bs4 import BeautifulSoup
 import time
 from datetime import datetime
-import google.generativeai as genai
-from google.generativeai import types
 import io
 import csv
-from docx import Document
-from semantic_scholar import SemanticScholar
 import re
+
+# Manejo de importaciones opcionales
+try:
+    from bs4 import BeautifulSoup
+    BEAUTIFULSOUP_AVAILABLE = True
+except ImportError:
+    BEAUTIFULSOUP_AVAILABLE = False
+    st.warning("⚠️ BeautifulSoup no está disponible. La búsqueda en SciELO no funcionará.")
+
+try:
+    import google.generativeai as genai
+    from google.generativeai import types
+    GENAI_AVAILABLE = True
+except ImportError:
+    GENAI_AVAILABLE = False
+    st.warning("⚠️ Google Generative AI no está disponible. Las funciones de IA no funcionarán.")
+
+try:
+    from docx import Document
+    DOCX_AVAILABLE = True
+except ImportError:
+    DOCX_AVAILABLE = False
+    st.warning("⚠️ python-docx no está disponible. La exportación a DOCX no funcionará.")
+
+try:
+    from semantic_scholar import SemanticScholar
+    SEMANTIC_SCHOLAR_AVAILABLE = True
+except ImportError:
+    SEMANTIC_SCHOLAR_AVAILABLE = False
+    st.warning("⚠️ Semantic Scholar no está disponible. La búsqueda en Semantic Scholar no funcionará.")
 
 # Clase Agente con memoria
 class AgenteConMemoria:
@@ -25,9 +52,12 @@ class AgenteConMemoria:
     def limpiar_memoria(self):
         self.memoria = []
 
-# FUNCIONES DE BÚSQUEDA MEJORADAS
+# FUNCIONES DE BÚSQUEDA MEJORADAS CON MANEJO DE ERRORES
 def buscar_semantic_scholar(query, max_results=5):
     """Búsqueda gratuita en Semantic Scholar"""
+    if not SEMANTIC_SCHOLAR_AVAILABLE:
+        return []
+    
     articulos = []
     try:
         scholar = SemanticScholar()
@@ -52,6 +82,10 @@ def buscar_semantic_scholar(query, max_results=5):
 
 def buscar_scielo(query, max_results=5):
     """Búsqueda gratuita en SciELO"""
+    if not BEAUTIFULSOUP_AVAILABLE:
+        st.error("BeautifulSoup no está instalado. Instala con: pip install beautifulsoup4")
+        return []
+    
     articulos = []
     try:
         url = f"https://search.scielo.org/?q={query}&lang=es"
@@ -134,6 +168,27 @@ def detectar_tipo_solicitud(user_input):
 # FUNCIONES DE GENERACIÓN MEJORADAS
 def generar_planteamiento_estructurado(tema, contexto=""):
     """Genera un planteamiento del problema bien estructurado"""
+    if not GENAI_AVAILABLE:
+        return f"""
+        # PLANTEAMIENTO DEL PROBLEMA - {tema}
+        
+        ## DESCRIPCIÓN DEL PROBLEMA
+        La investigación se centra en el análisis de {tema}. Este tema representa un área de creciente importancia en el contexto actual.
+        
+        ## JUSTIFICACIÓN
+        El estudio de {tema} es relevante debido a su impacto en diversos ámbitos. La comprensión de este fenómeno puede contribuir significativamente al campo.
+        
+        ## DELIMITACIÓN
+        La investigación se limitará al análisis de {tema} en el contexto de {contexto if contexto else 'diversos escenarios'}.
+        
+        ## PREGUNTAS DE INVESTIGACIÓN
+        1. ¿Cuáles son los principales factores que influyen en {tema}?
+        2. ¿Cómo se manifiesta {tema} en diferentes contextos?
+        3. ¿Qué estrategias pueden implementarse para abordar los desafíos relacionados con {tema}?
+        
+        *Nota: Para una generación más precisa, instala google-generativeai*
+        """
+    
     try:
         client = genai.Client()
         
@@ -157,7 +212,7 @@ def generar_planteamiento_estructurado(tema, contexto=""):
         # PREGUNTAS DE INVESTIGACIÓN
         [Formula 3-5 preguntas de investigación específicas y relevantes]
         
-        Usa un lenguaje académico formal en español. Sé específico y evgeneralizaciones.
+        Usa un lenguaje académico formal en español. Sé específico y evita generalizaciones.
         """
         
         response = client.models.generate_content(
@@ -173,6 +228,20 @@ def generar_planteamiento_estructurado(tema, contexto=""):
 
 def generar_objetivos_estructurados(tema, contexto=""):
     """Genera objetivos de investigación estructurados"""
+    if not GENAI_AVAILABLE:
+        return f"""
+        OBJETIVO GENERAL:
+        Analizar los aspectos fundamentales de {tema} en el contexto de {contexto if contexto else 'diversos escenarios'}.
+        
+        OBJETIVOS ESPECÍFICOS:
+        1. Identificar los principales componentes de {tema}
+        2. Evaluar el impacto de {tema} en diferentes contextos
+        3. Proponer estrategias para optimizar los resultados relacionados con {tema}
+        4. Establecer lineamientos para la implementación efectiva de soluciones
+        
+        *Nota: Para una generación más precisa, instala google-generativeai*
+        """
+    
     try:
         client = genai.Client()
         
@@ -209,6 +278,18 @@ def generar_objetivos_estructurados(tema, contexto=""):
 
 def generar_respuesta_general(tema, user_input):
     """Genera respuesta general del asistente"""
+    if not GENAI_AVAILABLE:
+        return f"""
+        Como asistente de investigación especializado en {tema}, puedo sugerirte:
+        
+        - Realizar una búsqueda bibliográfica en bases de datos académicas
+        - Considerar enfoques metodológicos mixtos para una comprensión integral
+        - Analizar el contexto específico de aplicación
+        - Identificar variables clave para tu investigación
+        
+        Para respuestas más específicas, instala google-generativeai
+        """
+    
     try:
         client = genai.Client()
         
@@ -274,7 +355,7 @@ def chat_con_agente(agente, user_input, contexto_usuario=""):
     except Exception as e:
         return f"Error en el chat: {e}"
 
-# FUNCIONES ORIGINALES (MANTENIDAS)
+# FUNCIONES ORIGINALES (MANTENIDAS CON MEJOR MANEJO DE ERRORES)
 def preparar_texto_para_gemini(articulos):
     texto = ""
     for art in articulos:
@@ -282,6 +363,9 @@ def preparar_texto_para_gemini(articulos):
     return texto
 
 def resumir_articulos_con_gemini(texto):
+    if not GENAI_AVAILABLE:
+        return "La funcionalidad de resumen con IA no está disponible. Instala google-generativeai."
+    
     try:
         client = genai.Client()
         prompt = (f"Analiza estos artículos académicos para resumir temas principales, "
@@ -296,6 +380,9 @@ def resumir_articulos_con_gemini(texto):
         return f"Error al generar resumen: {e}"
 
 def generar_planteamiento_problema(texto_resumen, contexto_usuario):
+    if not GENAI_AVAILABLE:
+        return "Instala google-generativeai para usar esta función."
+    
     try:
         client = genai.Client()
         prompt = (
@@ -317,6 +404,9 @@ def generar_planteamiento_problema(texto_resumen, contexto_usuario):
         return f"Error al generar planteamiento: {e}"
 
 def generar_objetivos_investigacion(texto_resumen, contexto_usuario):
+    if not GENAI_AVAILABLE:
+        return "Instala google-generativeai para usar esta función."
+    
     try:
         client = genai.Client()
         prompt = (
@@ -336,6 +426,9 @@ def generar_objetivos_investigacion(texto_resumen, contexto_usuario):
         return f"Error al generar objetivos: {e}"
 
 def sugerir_variables_operativas(texto_resumen, contexto_usuario):
+    if not GENAI_AVAILABLE:
+        return "Instala google-generativeai para usar esta función."
+    
     try:
         client = genai.Client()
         prompt = (
@@ -354,6 +447,9 @@ def sugerir_variables_operativas(texto_resumen, contexto_usuario):
         return f"Error al generar variables: {e}"
 
 def generar_sugerencias_metodologicas(texto_resumen, contexto_usuario):
+    if not GENAI_AVAILABLE:
+        return "Instala google-generativeai para usar esta función."
+    
     try:
         client = genai.Client()
         prompt = (
@@ -419,13 +515,22 @@ def main():
         layout="wide"
     )
     
-    # Header principal
+    # Header principal con advertencias de dependencias
     st.markdown("""
     <div class="main-header" style="text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; margin-bottom: 20px;">
-        <h1>🔬 Asistente de Investigación Inteligente para Postgrado</h1>
+        <h1>🔬 Asistente de Investigación Inteligente</h1>
         <p>Chatbot mejorado con procesamiento avanzado de lenguaje natural</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Mostrar advertencias de dependencias
+    if not all([BEAUTIFULSOUP_AVAILABLE, GENAI_AVAILABLE, DOCX_AVAILABLE, SEMANTIC_SCHOLAR_AVAILABLE]):
+        st.warning("""
+        ⚠️ **Algunas funcionalidades están limitadas.** Para una experiencia completa, instala:
+        ```
+        pip install beautifulsoup4 google-generativeai python-docx semantic-scholar
+        ```
+        """)
     
     # Sidebar
     with st.sidebar:
@@ -443,9 +548,9 @@ def main():
         st.markdown("---")
         st.subheader("ℹ️ Información")
         st.info("""
-        **Bases de datos gratuitas:**
-        - Semantic Scholar
-        - SciELO
+        **Bases de datos:**
+        - Semantic Scholar ✅
+        - SciELO ✅
         
         **Funcionalidades MEJORADAS:**
         - Chatbot inteligente con NLP
@@ -481,7 +586,7 @@ def main():
         
         with col1:
             st.markdown("""
-            ### 🚀 ¿Qué puedes hacer con la VERSIÓN MEJORADA?
+            ### 🚀 ¿Qué puedes hacer con esta herramienta?
             
             **🔍 Chatbot Inteligente MEJORADO**
             - Procesamiento avanzado de lenguaje natural
@@ -518,8 +623,8 @@ def main():
             4. **Recibe respuestas contextualizadas**
             
             ### 💬 Ejemplos de preguntas:
-            - *"Formula el planteamiento del problema sobre competencias digitales y resiliencia en entornos automatizados"*
-            - *"Genera objetivos para investigación sobre inteligencia artificial en educación"*
+            - *"Formula el planteamiento sobre competencias digitales en entornos automatizados"*
+            - *"Genera objetivos para investigación sobre IA en educación"*
             - *"Sugiere metodología para estudiar impacto de redes sociales"*
             
             ### 🗃️ Bases disponibles:
@@ -563,9 +668,13 @@ def main():
         col_db1, col_db2 = st.columns(2)
         
         with col_db1:
-            usar_semantic = st.checkbox("Semantic Scholar", value=True, help="Artículos en inglés e internacionales")
+            usar_semantic = st.checkbox("Semantic Scholar", value=True, 
+                                      disabled=not SEMANTIC_SCHOLAR_AVAILABLE,
+                                      help="Artículos en inglés e internacionales")
         with col_db2:
-            usar_scielo = st.checkbox("SciELO", value=True, help="Revistas científicas de América Latina")
+            usar_scielo = st.checkbox("SciELO", value=True,
+                                    disabled=not BEAUTIFULSOUP_AVAILABLE,
+                                    help="Revistas científicas de América Latina")
         
         if st.button("🔍 Ejecutar Búsqueda Integral", type="primary", use_container_width=True):
             if not consulta:
@@ -575,17 +684,21 @@ def main():
                     # Ejecutar búsquedas
                     articulos_encontrados = []
                     
-                    if usar_semantic:
+                    if usar_semantic and SEMANTIC_SCHOLAR_AVAILABLE:
                         with st.expander("🌐 Semantic Scholar", expanded=True):
                             resultados_ss = buscar_semantic_scholar(consulta, max_results)
                             articulos_encontrados.extend(resultados_ss)
                             st.success(f"📄 Encontrados: {len(resultados_ss)} artículos")
+                    elif usar_semantic:
+                        st.error("Semantic Scholar no está disponible")
                     
-                    if usar_scielo:
+                    if usar_scielo and BEAUTIFULSOUP_AVAILABLE:
                         with st.expander("🌎 SciELO", expanded=True):
                             resultados_scielo = buscar_scielo(consulta, max_results)
                             articulos_encontrados.extend(resultados_scielo)
                             st.success(f"📄 Encontrados: {len(resultados_scielo)} artículos")
+                    elif usar_scielo:
+                        st.error("SciELO no está disponible - instala beautifulsoup4")
                     
                     # Guardar resultados
                     st.session_state.articulos = articulos_encontrados
@@ -599,9 +712,17 @@ def main():
                         with st.expander("🤖 Resumen y Análisis con IA", expanded=True):
                             texto_gemini = preparar_texto_para_gemini(articulos_encontrados)
                             if texto_gemini.strip():
-                                resumen = resumir_articulos_con_gemini(texto_gemini)
-                                st.markdown(resumen)
-                                st.session_state.resumen_actual = resumen
+                                if GENAI_AVAILABLE:
+                                    resumen = resumir_articulos_con_gemini(texto_gemini)
+                                    st.markdown(resumen)
+                                    st.session_state.resumen_actual = resumen
+                                else:
+                                    st.info("""
+                                    **Resumen no disponible** - Para usar esta función:
+                                    ```
+                                    pip install google-generativeai
+                                    ```
+                                    """)
                             else:
                                 st.warning("No se encontraron artículos. Intenta con otros términos de búsqueda.")
                     else:
@@ -638,7 +759,8 @@ def main():
             col_gen1, col_gen2 = st.columns(2)
             
             with col_gen1:
-                if st.button("📝 Generar Planteamiento del Problema", use_container_width=True):
+                if st.button("📝 Generar Planteamiento del Problema", use_container_width=True,
+                           disabled=not GENAI_AVAILABLE):
                     with st.spinner("Generando planteamiento del problema..."):
                         if hasattr(st.session_state, 'resumen_actual'):
                             planteamiento = generar_planteamiento_problema(
@@ -649,9 +771,12 @@ def main():
                             st.markdown(planteamiento)
                         else:
                             st.error("Primero genera un resumen en la pestaña de Búsqueda")
+                if not GENAI_AVAILABLE:
+                    st.info("Instala google-generativeai para usar esta función")
             
             with col_gen2:
-                if st.button("🎯 Generar Objetivos de Investigación", use_container_width=True):
+                if st.button("🎯 Generar Objetivos de Investigación", use_container_width=True,
+                           disabled=not GENAI_AVAILABLE):
                     with st.spinner("Generando objetivos de investigación..."):
                         if hasattr(st.session_state, 'resumen_actual'):
                             objetivos = generar_objetivos_investigacion(
@@ -662,12 +787,15 @@ def main():
                             st.markdown(objetivos)
                         else:
                             st.error("Primero genera un resumen en la pestaña de Búsqueda")
+                if not GENAI_AVAILABLE:
+                    st.info("Instala google-generativeai para usar esta función")
             
             st.markdown("---")
             col_gen3, col_gen4 = st.columns(2)
             
             with col_gen3:
-                if st.button("📊 Sugerir Variables Operativas", use_container_width=True):
+                if st.button("📊 Sugerir Variables Operativas", use_container_width=True,
+                           disabled=not GENAI_AVAILABLE):
                     with st.spinner("Generando variables operativas..."):
                         if hasattr(st.session_state, 'resumen_actual'):
                             variables = sugerir_variables_operativas(
@@ -678,9 +806,12 @@ def main():
                             st.markdown(variables)
                         else:
                             st.error("Primero genera un resumen en la pestaña de Búsqueda")
+                if not GENAI_AVAILABLE:
+                    st.info("Instala google-generativeai para usar esta función")
             
             with col_gen4:
-                if st.button("🔬 Generar Sugerencias Metodológicas", use_container_width=True):
+                if st.button("🔬 Generar Sugerencias Metodológicas", use_container_width=True,
+                           disabled=not GENAI_AVAILABLE):
                     with st.spinner("Generando sugerencias metodológicas..."):
                         if hasattr(st.session_state, 'resumen_actual'):
                             metodologia = generar_sugerencias_metodologicas(
@@ -691,6 +822,8 @@ def main():
                             st.markdown(metodologia)
                         else:
                             st.error("Primero genera un resumen en la pestaña de Búsqueda")
+                if not GENAI_AVAILABLE:
+                    st.info("Instala google-generativeai para usar esta función")
     
     # Pestaña de Chat con Agente - COMPLETAMENTE REDISEÑADA
     with tab4:
@@ -714,179 +847,4 @@ def main():
             help="Proporciona contexto para respuestas más precisas"
         )
         
-        # Mostrar historial de chat
-        for mensaje in st.session_state.chat_history:
-            with st.chat_message(mensaje["role"]):
-                st.markdown(mensaje["content"])
-        
-        # Input de chat
-        if prompt := st.chat_input("Escribe tu pregunta sobre investigación..."):
-            # Agregar mensaje del usuario
-            st.session_state.chat_history.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-            
-            # Respuesta del agente MEJORADO
-            with st.chat_message("assistant"):
-                with st.spinner("🤔 Analizando tu consulta..."):
-                    # Usar la función de chat mejorada
-                    respuesta = chat_con_agente(
-                        st.session_state.agente, 
-                        prompt, 
-                        st.session_state.contexto_actual
-                    )
-                    st.markdown(respuesta)
-            
-            # Agregar respuesta al historial
-            st.session_state.chat_history.append({"role": "assistant", "content": respuesta})
-        
-        # Botones de acción
-        col_chat1, col_chat2, col_chat3 = st.columns(3)
-        with col_chat1:
-            if st.button("🗑️ Limpiar Conversación", use_container_width=True):
-                st.session_state.chat_history = []
-                st.session_state.agente.limpiar_memoria()
-                st.rerun()
-        
-        with col_chat2:
-            if st.button("💡 Ejemplo de Planteamiento", use_container_width=True):
-                ejemplo = "Formula el planteamiento del problema sobre competencias digitales para la resiliencia en entornos automatizados con IA"
-                st.session_state.chat_history.append({"role": "user", "content": ejemplo})
-                with st.chat_message("assistant"):
-                    with st.spinner("🤔 Generando ejemplo..."):
-                        respuesta = chat_con_agente(
-                            st.session_state.agente, 
-                            ejemplo, 
-                            "entornos laborales digitalizados"
-                        )
-                        st.markdown(respuesta)
-                st.session_state.chat_history.append({"role": "assistant", "content": respuesta})
-                st.rerun()
-        
-        with col_chat3:
-            if st.button("📊 Ver Estadísticas", use_container_width=True):
-                memoria = st.session_state.agente.obtener_memoria()
-                st.info(f"**Estadísticas del Agente:**\n- Consultas procesadas: {len(memoria)}\n- Tema actual: {st.session_state.contexto_actual}")
-    
-    # Pestaña de Exportar Resultados
-    with tab5:
-        st.markdown("### 📤 Exportar Resultados de Investigación")
-        
-        if not st.session_state.articulos:
-            st.warning("📌 No hay resultados para exportar. Realiza primero una búsqueda.")
-        else:
-            col_exp1, col_exp2, col_exp3 = st.columns(3)
-            
-            with col_exp1:
-                st.subheader("📚 Artículos Encontrados")
-                
-                # Exportar CSV
-                campos_csv = ["titulo", "autor", "año", "publicacion", "fuente", "url"]
-                articulos_exportar = []
-                
-                for art in st.session_state.articulos:
-                    articulos_exportar.append({
-                        "titulo": art.get("titulo", ""),
-                        "autor": art.get("autor", ""),
-                        "año": art.get("año", "s.f."),
-                        "publicacion": art.get("publicacion", ""),
-                        "fuente": art.get("fuente", ""),
-                        "url": art.get("url", "")
-                    })
-                
-                # Crear CSV en memoria
-                output = io.StringIO()
-                writer = csv.DictWriter(output, fieldnames=campos_csv)
-                writer.writeheader()
-                for item in articulos_exportar:
-                    writer.writerow(item)
-                csv_data = output.getvalue()
-                
-                st.download_button(
-                    label="📥 Descargar Artículos (CSV)",
-                    data=csv_data,
-                    file_name=f"articulos_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-                    mime="text/csv",
-                    use_container_width=True
-                )
-            
-            with col_exp2:
-                st.subheader("📄 Documentos Generados")
-                
-                if 'planteamiento' in st.session_state:
-                    # Crear DOCX en memoria
-                    doc = Document()
-                    doc.add_heading("Planteamiento del Problema", level=1)
-                    doc.add_paragraph(st.session_state.planteamiento)
-                    buffer = io.BytesIO()
-                    doc.save(buffer)
-                    buffer.seek(0)
-                    
-                    st.download_button(
-                        label="📄 Planteamiento (DOCX)",
-                        data=buffer,
-                        file_name="planteamiento_problema.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        use_container_width=True
-                    )
-                
-                if 'objetivos' in st.session_state:
-                    # Exportar objetivos como TXT
-                    objetivos_txt = st.session_state.objetivos
-                    st.download_button(
-                        label="🎯 Objetivos (TXT)",
-                        data=objetivos_txt,
-                        file_name="objetivos_investigacion.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
-            
-            with col_exp3:
-                st.subheader("📖 Bibliografía")
-                
-                # Generar bibliografía
-                referencias = []
-                for art in st.session_state.articulos:
-                    ref = {
-                        "autor": art["autor"],
-                        "año": art["año"] if art["año"] else "s.f.",
-                        "titulo": art["titulo"],
-                        "publicacion": art["publicacion"],
-                        "url": art["url"],
-                    }
-                    referencias.append(ref)
-                
-                bibliografia_apa = generar_bibliografia(referencias, estilo="APA")
-                
-                st.download_button(
-                    label="📚 Bibliografia APA (TXT)",
-                    data=bibliografia_apa,
-                    file_name="bibliografia_APA.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
-            
-            st.markdown("---")
-            st.subheader("📊 Estadísticas de Exportación")
-            
-            col_stats1, col_stats2, col_stats3, col_stats4 = st.columns(4)
-            
-            with col_stats1:
-                st.metric("Artículos", len(st.session_state.articulos))
-            
-            with col_stats2:
-                fuentes = set(art['fuente'] for art in st.session_state.articulos)
-                st.metric("Fuentes", len(fuentes))
-            
-            with col_stats3:
-                años = [art['año'] for art in st.session_state.articulos if art['año'].isdigit()]
-                if años:
-                    st.metric("Rango de años", f"{min(años)}-{max(años)}")
-                else:
-                    st.metric("Rango de años", "N/A")
-            
-            with col_stats4:
-                st.metric("Formatos", "CSV, DOCX, TXT")
-
-if __name__ == "__main__":
-    main()
+        # Mostrar historial
