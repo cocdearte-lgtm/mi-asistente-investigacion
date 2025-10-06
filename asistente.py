@@ -107,9 +107,33 @@ def generar_respuesta_ia(mensaje_usuario, contexto=""):
         )
         return respuesta['choices'][0]['message']['content']
     except Exception as e:
-        return f"""🤖 **Respuesta del Asistente IA:**
+       
+        return f"""**Respuesta del Asistente IA:**
 
 Parece que hay un problema con la conexión a la API de OpenAI. Error: {str(e)}
+
+**Mientras tanto, aquí tienes una guía general:**
+
+Para consultas sobre '{mensaje_usuario}', te recomiendo:
+
+**Fuentes académicas sugeridas:**
+- Google Scholar para búsqueda de artículos científicos
+- Scopus y Web of Science para literatura especializada
+- ScienceDirect y JSTOR para acceso a textos completos
+
+**Enfoque de investigación recomendado:**
+1. Realiza una revisión sistemática de literatura
+2. Identifica los autores más citados en el área
+3. Analiza las metodologías predominantes
+4. Establece tu marco teórico y conceptual
+
+**Próximos pasos:**
+- Define claramente tu pregunta de investigación
+- Selecciona la metodología apropiada
+- Establece tus criterios de inclusión/exclusión
+- Planifica tu estrategia de búsqueda bibliográfica
+
+*Para usar la funcionalidad completa de IA, necesitarás configurar una API key de OpenAI.*"""
 
 **Mientras tanto, aquí tienes una guía general:**
 
@@ -625,6 +649,7 @@ st.markdown(
     "</div>", 
     unsafe_allow_html=True
 )
+
 
 
 
