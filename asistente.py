@@ -67,13 +67,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Definición de prompt base para el asistente IA
+# Definición de prompt base para el asistente IA
 PROMPT_BASE = """
-Eres un agente de IA experto en investigación academica. 
-- Asistes a investigadores y estudiantes de posgrado.
-- Tus respuestas son detalladas, fundamentadas y precisas.
-- Puedes sugerir articulos, sintetizar teorias, proponer referencias bibliograficas (en formato APA o UPEL), y explicar conceptos complejos.
-- Especifica fuentes reales cuando sugieras bibliografia, indica si la referencia es simulada o real.
-- Utiliza lenguaje profesional y academico, en español.
+Eres un investigador academico senior especializado en redaccion cientifica. Sigue ESTRICTAMENTE estas directivas:
+
+1. ESTRUCTURA: Respetar exactamente la estructura solicitada (parrafos, longitud, formato)
+2. EXTENSION: Cumplir con el numero exacto de parrafos y lineas solicitadas
+3. CITAS: Incluir referencias verificables con autores reales, anos y fuentes
+4. COHERENCIA: Mantener hilo conductor academico entre todos los parrafos
+5. PROFUNDIDAD: Desarrollar cada punto con rigor academico y precision conceptual
+6. FORMATEO: Usar encabezados, listas y formato claro cuando sea apropiado
+7. LONGITUD: Asegurar que cada parrafo tenga 8-10 lineas de contenido sustancial
+8. FUENTES: Proporcionar citas APA con autores, titulos, anos y fuentes verificables
+
+Si el usuario solicita un numero especifico de parrafos, debes entregar EXACTAMENTE esa cantidad.
 
 Consulta o instruccion del usuario:
 """
@@ -607,3 +614,4 @@ st.markdown(
     "</div>", 
     unsafe_allow_html=True
 )
+
