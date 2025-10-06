@@ -1,5 +1,7 @@
 import streamlit as st
 import re
+import openai
+import os
 
 # Configuración de página
 st.set_page_config(
@@ -45,23 +47,92 @@ st.markdown("""
     border-left: 4px solid #667eea;
     margin: 10px 0;
 }
+.ia-feature {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 10px 0;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # Header principal
 st.markdown("""
 <div class="main-header">
-    <h1>🔬 Asistente de Investigación Académica</h1>
-    <p style="margin: 0; font-size: 1.2em;">Herramienta inteligente para el desarrollo de proyectos de investigación</p>
-    <p style="margin: 10px 0 0 0; font-size: 1em;">✅ Sistema funcionando correctamente</p>
+    <h1>🔬 Asistente de Investigación Académica Inteligente</h1>
+    <p style="margin: 0; font-size: 1.2em;">Herramienta con IA para el desarrollo de proyectos de investigación</p>
+    <p style="margin: 10px 0 0 0; font-size: 1em;">🤖 Con tecnología GPT-4 | ✅ Sistema funcionando correctamente</p>
 </div>
 """, unsafe_allow_html=True)
+
+# Definición de prompt base para el asistente IA
+PROMPT_BASE = """
+Eres un agente de IA experto en investigación académica. 
+- Asistes a investigadores y estudiantes de posgrado.
+- Tus respuestas son detalladas, fundamentadas y precisas.
+- Puedes sugerir artículos, sintentizar teorías, proponer referencias bibliográficas (en formato APA o UPEL), y explicar conceptos complejos.
+- Especifica fuentes reales cuando sugieras bibliografía, indica si la referencia es simulada o real.
+- Utiliza lenguaje profesional y académico, en español.
+
+Consulta o instrucción del usuario:
+"""
+
+# Función para generar la respuesta del agente IA
+def generar_respuesta_ia(mensaje_usuario, contexto=""):
+    prompt_completo = PROMPT_BASE + mensaje_usuario
+    if contexto:
+        prompt_completo += f"\n\nContexto adicional: {contexto}"
+    
+    try:
+        # Nota: Necesitarás configurar tu API key de OpenAI
+        # openai.api_key = st.secrets["OPENAI_API_KEY"]
+        
+        respuesta = openai.ChatCompletion.create(
+            model="gpt-4",  # Puedes cambiar a "gpt-3.5-turbo" si prefieres
+            messages=[
+                {"role": "system", "content": PROMPT_BASE},
+                {"role": "user", "content": mensaje_usuario}
+            ],
+            max_tokens=1500,
+            temperature=0.7
+        )
+        return respuesta['choices'][0]['message']['content']
+    except Exception as e:
+        return f"""🤖 **Respuesta del Asistente IA:**
+
+Parece que hay un problema con la conexión a la API de OpenAI. Error: {str(e)}
+
+**Mientras tanto, aquí tienes una guía general:**
+
+Para consultas sobre '{mensaje_usuario}', te recomiendo:
+
+📚 **Fuentes académicas sugeridas:**
+- Google Scholar para búsqueda de artículos científicos
+- Scopus y Web of Science para literatura especializada
+- ScienceDirect y JSTOR para acceso a textos completos
+
+🔍 **Enfoque de investigación recomendado:**
+1. Realiza una revisión sistemática de literatura
+2. Identifica los autores más citados en el área
+3. Analiza las metodologías predominantes
+4. Establece tu marco teórico y conceptual
+
+💡 **Próximos pasos:**
+- Define claramente tu pregunta de investigación
+- Selecciona la metodología apropiada
+- Establece tus criterios de inclusión/exclusión
+- Planifica tu estrategia de búsqueda bibliográfica
+
+*Para usar la funcionalidad completa de IA, necesitarás configurar una API key de OpenAI.*"""
 
 # Inicializar session state
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 if 'contexto_actual' not in st.session_state:
     st.session_state.contexto_actual = ""
+if 'modo_ia' not in st.session_state:
+    st.session_state.modo_ia = False
 
 # Funciones de procesamiento de lenguaje
 def extraer_tema_principal(user_input):
@@ -169,148 +240,8 @@ Analizar sistemáticamente los aspectos fundamentales de **{tema}** en el contex
 """
     return objetivos
 
-def generar_sugerencias_metodologicas(tema, contexto=""):
-    """Genera sugerencias metodológicas detalladas con excelente redacción"""
-    
-    metodologia = f"""
-## 🎓 SUGERENCIAS METODOLÓGICAS PARA: {tema.title()}
-
-### **ENFOQUE METODOLÓGICO RECOMENDADO**
-
-**Investigación Mixta de Diseño Secuencial Explicativo** - Esta aproximación metodológica combina sistemáticamente la solidez de los métodos cuantitativos para establecer patrones generales con la profundidad analítica de los métodos cualitativos para comprender significados y contextualizaciones específicas.
-
-### **DISEÑO DE INVESTIGACIÓN**
-
-- **Tipo de diseño**: Secuencial explicativo (Fase cuantitativa → Fase cualitativa)
-- **Fase 1**: Estudio cuantitativo orientado a identificar patrones, tendencias y relaciones significativas
-- **Fase 2**: Investigación cualitativa destinada a explicar, interpretar y profundizar en los hallazgos cuantitativos
-- **Estrategia de muestreo**: Muestreo estratificado según criterios relevantes al contexto de estudio
-
-### **TÉCNICAS E INSTRUMENTOS DE RECOLECCIÓN**
-
-**📈 Componente Cuantitativo:**
-- *Encuestas estructuradas* con escalas Likert validadas psicométricamente
-- *Análisis documental sistemático* de fuentes secundarias confiables
-- *Instrumentos de medición*: Cuestionarios estandarizados, registros sistemáticos, bases de datos oficiales
-
-**📊 Componente Cualitativo:**
-- *Entrevistas semiestructuradas* con guías temáticas flexibles
-- *Grupos focales* para contrastar perspectivas y enriquecer el análisis
-- *Observación participante* en contextos naturales de ocurrencia del fenómeno
-- *Análisis de contenido cualitativo* de documentos, narrativas y discursos
-
-### **ESTRATEGIAS DE ANÁLISIS DE DATOS**
-
-**Análisis Cuantitativo:**
-- Estadística descriptiva (medidas de tendencia central, dispersión, distribuciones)
-- Análisis inferencial (pruebas de correlación, comparación de medias, análisis de varianza)
-- Modelamiento multivariado (análisis de regresión, análisis factorial, modelos predictivos)
-
-**Análisis Cualitativo:**
-- Análisis temático con procesos de codificación abierta, axial y selectiva
-- Triangulación metodológica para garantizar robustez en los hallazgos
-- Análisis de contenido categorial con identificación de patrones discursivos
-
-### **CONSIDERACIONES ÉTICAS**
-
-- Obtención de consentimiento informado de participantes
-- Garantía de confidencialidad y protección de datos
-- Rigor metodológico y transparencia en procedimientos
-- Consideración del contexto específico: {contexto if contexto else "diversos escenarios"}
-"""
-    return metodologia
-
-def sugerir_variables_operativas(tema, contexto=""):
-    """Sugiere variables de investigación con redacción académica"""
-    
-    variables = f"""
-## 🔬 VARIABLES DE INVESTIGACIÓN PARA: {tema.title()}
-
-### **VARIABLES INDEPENDIENTES PRINCIPALES**
-
-1. **Nivel de Implementación de {tema}**
-   - *Definición operacional*: Grado de desarrollo, integración y madurez medido mediante escalas validadas basadas en indicadores específicos de adopción y aplicación.
-   - *Instrumento de medición*: Escala Likert con criterios claramente definidos y operacionalizados.
-
-2. **Características Contextuales de {contexto if contexto else 'aplicación'}**
-   - *Definición operacional*: Conjunto de atributos y condiciones del entorno que pueden moderar o mediar los efectos observados.
-   - *Instrumento de medición*: Matriz de evaluación contextual con dimensiones preestablecidas.
-
-### **VARIABLES DEPENDIENTES PRINCIPALES**
-
-1. **Impacto en Resultados Clave**
-   - *Definición operacional*: Cambios cuantificables y observables en indicadores de desempeño, eficiencia o efectividad relacionados con el fenómeno de estudio.
-   - *Instrumento de medición*: Métricas cuantitativas predefinidas y validadas empíricamente.
-
-2. **Grado de Adopción y Aceptación**
-   - *Definición operacional*: Nivel de implementación exitosa y satisfacción percibida por usuarios y partes interesadas.
-   - *Instrumento de medición*: Escalas de satisfacción y métricas de uso y adopción.
-
-### **VARIABLES INTERVINIENTES Y MEDIADORAS**
-
-- **Competencias y Habilidades Específicas** requeridas para la implementación efectiva.
-- **Recursos e Infraestructura Disponible** para sustentar los procesos.
-- **Factores Culturales y Organizacionales** que facilitan u obstaculizan la adopción.
-
-### **VARIABLES DE CONTROL**
-
-- Experiencia previa y formación de los participantes.
-- Características demográficas relevantes (edad, género, formación académica).
-- Tamaño y tipo de organización o contexto de aplicación.
-- Recursos económicos y tecnológicos disponibles.
-
-### **MATRIZ DE OPERACIONALIZACIÓN**
-
-Cada variable debe especificarse considerando:
-- Definición conceptual fundamentada teóricamente.
-- Definición operacional claramente especificada.
-- Escala de medición apropiada y validada.
-- Instrumento de recolección confiable y válido.
-- Procedimiento de aplicación estandarizado.
-"""
-    return variables
-
-def generar_respuesta_general(tema, user_input):
-    """Genera respuesta general del asistente con excelente redacción"""
-    
-    respuesta = f"""
-## 💡 ASESORÍA ESPECIALIZADA EN INVESTIGACIÓN: {tema.title()}
-
-Como asistente de investigación especializado, he analizado detenidamente su consulta sobre **"{tema}"** y puedo ofrecerle orientación en los siguientes aspectos:
-
-### 🎯 **ENFOQUES DE INVESTIGACIÓN RECOMENDADOS:**
-
-**1. Investigación Exploratoria-Descriptiva**
-- *Adecuado para*: Caracterizar el fenómeno de estudio y establecer bases conceptuales sólidas.
-- *Métodos sugeridos*: Revisión sistemática de literatura, estudio de casos emblemáticos, análisis documental exhaustivo.
-
-**2. Investigación Explicativa**  
-- *Adecuado para*: Identificar relaciones causales y factores determinantes subyacentes.
-- *Métodos sugeridos*: Diseños cuasi-experimentales, modelamiento multivariado, análisis de trayectorias.
-
-**3. Investigación Aplicada**
-- *Adecuado para*: Desarrollar soluciones prácticas y validar intervenciones específicas.
-- *Métodos sugeridos*: Investigación-acción participativa, diseño y desarrollo iterativo, estudios de implementación.
-
-### 📊 **VARIABLES CLAVE A CONSIDERAR:**
-
-- *Variables de proceso*: Mecanismos, estrategias, metodologías de implementación.
-- *Variables de resultado*: Impacto, efectividad, eficiencia, sostenibilidad.  
-- *Variables contextuales*: Entorno específico, recursos disponibles, características poblacionales.
-
-### 🔍 **PRÓXIMOS PASOS SUGERIDOS:**
-
-1. Realizar una búsqueda bibliográfica especializada y actualizada.
-2. Definir el marco teórico y conceptual específico para su investigación.
-3. Establecer preguntas de investigación claramente delimitadas y relevantes.
-4. Seleccionar la metodología más apropiada según sus objetivos específicos.
-
-**¿Le gustaría que profundice en algún aspecto específico de la investigación sobre {tema}?**
-"""
-    return respuesta
-
-# Función principal del chat
-def procesar_consulta_usuario(user_input, contexto=""):
+# Función principal del chat MEJORADA con IA
+def procesar_consulta_usuario(user_input, contexto="", usar_ia=False):
     """Procesa la consulta del usuario y genera respuesta con excelente redacción"""
     try:
         # Extraer tema y tipo de solicitud
@@ -321,18 +252,86 @@ def procesar_consulta_usuario(user_input, contexto=""):
         st.info(f"🔍 **Tema detectado:** {tema_real}")
         if contexto:
             st.info(f"🎯 **Contexto considerado:** {contexto}")
+        if usar_ia:
+            st.success("🤖 **Modo IA activado** - Generando respuesta con inteligencia artificial")
         
-        # Generar respuesta según el tipo de solicitud
+        # Si el modo IA está activado, usar la función de IA
+        if usar_ia:
+            with st.spinner("🤖 Consultando con IA..."):
+                respuesta = generar_respuesta_ia(user_input, contexto)
+                return respuesta
+        
+        # Si no, usar las funciones predefinidas
         if tipo_solicitud == "planteamiento":
             respuesta = generar_planteamiento_estructurado(tema_real, contexto)
         elif tipo_solicitud == "objetivos":
             respuesta = generar_objetivos_estructurados(tema_real, contexto)
         elif tipo_solicitud == "metodologia":
-            respuesta = generar_sugerencias_metodologicas(tema_real, contexto)
+            respuesta = f"""
+## 🎓 SUGERENCIAS METODOLÓGICAS PARA: {tema_real.title()}
+
+### **ENFOQUE METODOLÓGICO RECOMENDADO**
+**Investigación Mixta de Diseño Secuencial Explicativo** - Combina métodos cuantitativos y cualitativos para un análisis comprehensivo.
+
+### **DISEÑO DE INVESTIGACIÓN**
+- **Tipo**: Secuencial explicativo
+- **Fase 1**: Análisis cuantitativo (encuestas, datos secundarios)
+- **Fase 2**: Profundización cualitativa (entrevistas, estudios de caso)
+
+### **TÉCNICAS DE RECOLECCIÓN**
+- 📊 Encuestas con escalas Likert validadas
+- 🎤 Entrevistas semiestructuradas
+- 📑 Análisis documental sistemático
+- 👥 Grupos focales para triangulación
+
+*Contexto: {contexto if contexto else "diversos escenarios de aplicación"}*
+"""
         elif tipo_solicitud == "variables":
-            respuesta = sugerir_variables_operativas(tema_real, contexto)
+            respuesta = f"""
+## 🔬 VARIABLES DE INVESTIGACIÓN PARA: {tema_real.title()}
+
+### **VARIABLES INDEPENDIENTES**
+- Factores influyentes en {tema_real}
+- Estrategias implementadas
+- Características contextuales
+
+### **VARIABLES DEPENDIENTES**
+- Resultados observables
+- Impacto medible
+- Efectividad de intervenciones
+
+### **VARIABLES DE CONTROL**
+- Contexto específico
+- Características poblacionales
+- Recursos disponibles
+
+*Contexto: {contexto}*
+"""
         else:
-            respuesta = generar_respuesta_general(tema_real, user_input)
+            respuesta = f"""
+## 💡 ASESORÍA ESPECIALIZADA EN INVESTIGACIÓN: {tema_real.title()}
+
+He analizado su consulta sobre **"{tema_real}"** y puedo ofrecerle orientación en:
+
+### 🎯 **ENFOQUES RECOMENDADOS:**
+- **Investigación exploratoria**: Para caracterizar el fenómeno
+- **Investigación explicativa**: Para identificar relaciones causales
+- **Investigación aplicada**: Para desarrollar soluciones prácticas
+
+### 📊 **ASPECTOS CLAVE:**
+- Definición clara del problema de investigación
+- Establecimiento de preguntas guía
+- Selección de metodología apropiada
+- Operacionalización de variables
+
+### 🔍 **PRÓXIMOS PASOS:**
+1. Búsqueda bibliográfica especializada
+2. Delimitación del marco teórico-conceptual
+3. Formulación de hipótesis o preguntas
+4. Diseño metodológico detallado
+
+**¿Le gustaría que profundice en algún aspecto específico?**
+"""
         
         return respuesta
         
@@ -340,14 +339,21 @@ def procesar_consulta_usuario(user_input, contexto=""):
         return f"❌ Se ha producido un error en el procesamiento: {str(e)}"
 
 # Interfaz principal con pestañas
-tab1, tab2, tab3 = st.tabs(["🏠 Inicio", "🔍 Búsqueda Rápida", "💬 Chat Principal"])
+tab1, tab2, tab3 = st.tabs(["🏠 Inicio", "🔍 Búsqueda Rápida", "💬 Chat Inteligente"])
 
 with tab1:
-    st.markdown("## 🚀 Bienvenido al Asistente de Investigación Inteligente")
+    st.markdown("## 🚀 Bienvenido al Asistente de Investigación con IA")
     
     col1, col2 = st.columns([2, 1])
     
     with col1:
+        st.markdown("""
+        <div class="ia-feature">
+        <h4>🤖 ASISTENTE CON INTELIGENCIA ARTIFICIAL</h4>
+        <p>Ahora potenciado con GPT-4 para respuestas más inteligentes, contextualizadas y fundamentadas académicamente.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         st.markdown("""
         <div class="feature-card">
         <h4>💬 Chatbot Inteligente con Procesamiento de Lenguaje Natural</h4>
@@ -374,36 +380,36 @@ with tab1:
         
         st.markdown("""
         <div style="background: #e8f4fd; padding: 15px; border-radius: 10px; margin: 10px 0;">
-        <h4>1. 💬 Acceder al Chat</h4>
-        <p>Diríjase a la pestaña "Chat Principal"</p>
+        <h4>1. 💬 Acceder al Chat Inteligente</h4>
+        <p>Diríjase a la pestaña "Chat Inteligente"</p>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown("""
         <div style="background: #e8f4fd; padding: 15px; border-radius: 10px; margin: 10px 0;">
-        <h4>2. 🎯 Formular su consulta</h4>
+        <h4>2. 🤖 Activar el modo IA (Opcional)</h4>
+        <p>Active el interruptor para respuestas con inteligencia artificial</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="background: #e8f4fd; padding: 15px; border-radius: 10px; margin: 10px 0;">
+        <h4>3. 🎯 Formular su consulta</h4>
         <p>Ejemplo:<br>
-        <em>"Formule el planteamiento sobre competencias digitales"</em></p>
+        <em>"Analice las tendencias actuales en educación virtual"</em></p>
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
-        <div style="background: #e8f4fd; padding: 15px; border-radius: 10px; margin: 10px 0;">
-        <h4>3. 📚 Recibir asesoría especializada</h4>
-        <p>Contenido académico estructurado y profesional</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("### 💡 Ejemplos de consultas:")
+        st.markdown("### 💡 Ejemplos de consultas con IA:")
         st.code("""
-"Formule el planteamiento sobre 
-competencias digitales docentes"
+"Revise la literatura sobre competencias 
+digitales docentes y sugiera referencias APA"
 
-"Genere objetivos para investigación 
+"Analice metodologías mixtas para estudiar 
+el impacto de redes sociales en adolescentes"
+
+"Proponga un marco teórico para investigación 
 en inteligencia artificial educativa"
-
-"Sugiera metodología para estudiar 
-el impacto de redes sociales"
         """)
 
 with tab2:
@@ -445,24 +451,59 @@ with tab2:
     with col_btn3:
         if st.button("🔬 Generar Metodología", use_container_width=True):
             with st.spinner("Generando sugerencias metodológicas..."):
-                respuesta = generar_sugerencias_metodologicas(tema_consulta, contexto_consulta)
+                respuesta = f"""
+## 🎓 SUGERENCIAS METODOLÓGICAS PARA: {tema_consulta.title()}
+
+### **ENFOQUE RECOMENDADO**
+Investigación mixta con diseño secuencial explicativo.
+
+### **TÉCNICAS DE RECOLECCIÓN**
+- Encuestas cuantitativas
+- Entrevistas cualitativas
+- Análisis documental
+- Observación sistemática
+
+*Contexto: {contexto_consulta}*
+"""
                 st.markdown(respuesta)
     
     with col_btn4:
         if st.button("📊 Generar Variables", use_container_width=True):
             with st.spinner("Generando variables de investigación..."):
-                respuesta = sugerir_variables_operativas(tema_consulta, contexto_consulta)
+                respuesta = f"""
+## 🔬 VARIABLES PARA: {tema_consulta.title()}
+
+### **VARIABLES INDEPENDIENTES**
+- Factores contextuales
+- Estrategias implementadas
+- Recursos disponibles
+
+### **VARIABLES DEPENDIENTES**
+- Resultados observables
+- Impacto medible
+- Efectividad
+
+*Contexto: {contexto_consulta}*
+"""
                 st.markdown(respuesta)
 
 with tab3:
-    st.markdown("## 💬 Chat Inteligente con el Asistente")
+    st.markdown("## 💬 Chat Inteligente con IA")
     
-    # Configuración del contexto
-    contexto_chat = st.text_input(
-        "🎯 Contexto de investigación para esta conversación:",
-        placeholder="Ej: mi tesis de maestría, investigación en educación superior...",
-        value="proyecto de investigación académica"
-    )
+    # Configuración del contexto y modo IA
+    col_config1, col_config2 = st.columns([2, 1])
+    
+    with col_config1:
+        contexto_chat = st.text_input(
+            "🎯 Contexto de investigación para esta conversación:",
+            placeholder="Ej: mi tesis de maestría, investigación en educación superior...",
+            value="proyecto de investigación académica"
+        )
+    
+    with col_config2:
+        # Interruptor para modo IA
+        modo_ia = st.toggle("🤖 Activar modo IA", value=False)
+        st.session_state.modo_ia = modo_ia
     
     # Botón para limpiar chat
     col_clear, col_stats = st.columns([1, 3])
@@ -474,6 +515,8 @@ with tab3:
     with col_stats:
         if st.session_state.chat_history:
             st.info(f"💬 Conversación activa: {len(st.session_state.chat_history)//2} intercambios")
+        if st.session_state.modo_ia:
+            st.success("🤖 Modo IA activado - Respuestas con inteligencia artificial")
     
     st.markdown("---")
     
@@ -499,20 +542,20 @@ with tab3:
     col_ex1, col_ex2, col_ex3, col_ex4 = st.columns(4)
     
     with col_ex1:
-        if st.button("🧩 Ejemplo: Planteamiento", use_container_width=True):
+        if st.button("🧩 Planteamiento", use_container_width=True):
             st.session_state.ejemplo_activo = "Formule el planteamiento del problema sobre competencias digitales para la empleabilidad en la era digital"
     
     with col_ex2:
-        if st.button("🎯 Ejemplo: Objetivos", use_container_width=True):
+        if st.button("🎯 Objetivos", use_container_width=True):
             st.session_state.ejemplo_activo = "Genere objetivos de investigación sobre la implementación de inteligencia artificial en instituciones educativas"
     
     with col_ex3:
-        if st.button("🔬 Ejemplo: Metodología", use_container_width=True):
+        if st.button("🔬 Metodología", use_container_width=True):
             st.session_state.ejemplo_activo = "Sugiera una metodología para investigar el impacto de las redes sociales en el aprendizaje de adolescentes"
     
     with col_ex4:
-        if st.button("📊 Ejemplo: Variables", use_container_width=True):
-            st.session_state.ejemplo_activo = "Proponga variables operativas para estudiar liderazgo educativo en entornos digitales"
+        if st.button("📚 Con IA", use_container_width=True):
+            st.session_state.ejemplo_activo = "Analice las tendencias actuales en educación virtual y sugiera referencias bibliográficas recientes en formato APA"
     
     # Input del chat
     prompt = st.chat_input("Escriba su pregunta o solicitud de investigación...")
@@ -532,19 +575,29 @@ with tab3:
         
         # Generar y mostrar respuesta
         with st.chat_message("assistant"):
-            with st.spinner("🤔 Analizando su consulta y generando respuesta..."):
-                respuesta = procesar_consulta_usuario(prompt, contexto_chat)
+            with st.spinner("🤔 Analizando su consulta..."):
+                respuesta = procesar_consulta_usuario(prompt, contexto_chat, st.session_state.modo_ia)
                 st.markdown(respuesta)
         
         # Agregar respuesta al historial
         st.session_state.chat_history.append({"role": "assistant", "content": respuesta})
 
+# Configuración de API Key (sección colapsada)
+with st.sidebar.expander("🔧 Configuración de API OpenAI"):
+    st.info("Para usar el modo IA, necesitas configurar tu API key de OpenAI")
+    api_key = st.text_input("API Key de OpenAI:", type="password")
+    if api_key:
+        openai.api_key = api_key
+        st.success("✅ API Key configurada correctamente")
+    else:
+        st.warning("⚠️ Ingresa tu API Key para activar el modo IA completo")
+
 # Footer
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: #666;'>"
-    "🔬 Asistente de Investigación Académica - Versión Profesional | "
-    "✅ Redacción académica mejorada | "
+    "🔬 Asistente de Investigación Académica Inteligente | "
+    "🤖 Con tecnología GPT-4 | "
     "✅ Sistema funcionando correctamente"
     "</div>", 
     unsafe_allow_html=True
