@@ -583,14 +583,19 @@ with tab3:
         st.session_state.chat_history.append({"role": "assistant", "content": respuesta})
 
 # Configuración de API Key (sección colapsada)
-with st.sidebar.expander("🔧 Configuración de API OpenAI"):
+with st.sidebar.expander("🔧 Configuración de API OpenAI", expanded=True):
     st.info("Para usar el modo IA, necesitas configurar tu API key de OpenAI")
-    api_key = st.text_input("API Key de OpenAI:", type="password")
+    api_key = st.text_input("API Key de OpenAI:", type="password", placeholder="sk-...", key="api_key_input")
     if api_key:
         openai.api_key = api_key
         st.success("✅ API Key configurada correctamente")
+        st.session_state.api_key_configurada = True
     else:
         st.warning("⚠️ Ingresa tu API Key para activar el modo IA completo")
+    
+    st.markdown("---")
+    st.markdown("**¿No tienes API Key?**")
+    st.markdown("[Obtener API Key de OpenAI](https://platform.openai.com/api-keys)")
 
 # Footer
 st.markdown("---")
@@ -602,3 +607,4 @@ st.markdown(
     "</div>", 
     unsafe_allow_html=True
 )
+
