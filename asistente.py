@@ -582,16 +582,26 @@ with tab3:
         # Agregar respuesta al historial
         st.session_state.chat_history.append({"role": "assistant", "content": respuesta})
 
-# Configuración de API Key (sección colapsada)
-with st.sidebar.expander("🔧 Configuración de API OpenAI", expanded=True):
-    st.info("Para usar el modo IA, necesitas configurar tu API key de OpenAI")
-    api_key = st.text_input("API Key de OpenAI:", type="password", placeholder="sk-...", key="api_key_input")
-    if api_key:
-        openai.api_key = api_key
-        st.success("✅ API Key configurada correctamente")
-        st.session_state.api_key_configurada = True
-    else:
-        st.warning("⚠️ Ingresa tu API Key para activar el modo IA completo")
+# Configuración de API Key - SEGURA
+with st.sidebar.expander("🔧 Configuración de API OpenAI", expanded=False):
+    st.info("Para uso personal - configura tu API key temporalmente")
+    
+    # Opción 1: Usar secrets de Streamlit (recomendado)
+    try:
+        if st.secrets["openai_api_key"]:
+            openai.api_key = st.secrets["openai_api_key"]
+            st.success("✅ API Key configurada (vía secrets)")
+            st.session_state.api_key_configurada = True
+    except:
+        # Opción 2: Input temporal (solo para esta sesión)
+        api_key = st.text_input("API Key Temporal:", type="password", placeholder="sk-...", key="api_key_temp")
+        if api_key:
+            openai.api_key = api_key
+            st.success("✅ API Key temporal configurada")
+            st.warning("⚠️ Esta key solo funciona en tu sesión actual")
+            st.session_state.api_key_configurada = True
+        else:
+            st.warning("🔒 Modo IA no disponible - Configura tu API key")
     
     st.markdown("---")
     st.markdown("**¿No tienes API Key?**")
@@ -607,4 +617,5 @@ st.markdown(
     "</div>", 
     unsafe_allow_html=True
 )
+
 
